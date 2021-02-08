@@ -1,0 +1,459 @@
+---
+title: "Final Project - Cleaning"
+author: "Tolga Atabas and Sherry Huang"
+date: "1/26/2021"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(dplyr)
+```
+
+Reading in the happiness dataset:
+
+The data is made available from the World Happiness Report in the format of separate CSV files per year from 2015 to 2020. Additionally, there were issues that required the conversion of some fields such as "Trust in Government" to numeric values. The remaining issue was to make the variable names more natural instead of names that have "coded" structures or names that contain ".." .
+
+```{r reading-happiness-datasets}
+# reading in world happiness datasets
+happiness_2015 <- read.csv("data/2015.csv") %>% mutate(year = 2015)
+happiness_2016 <- read.csv("data/2016.csv") %>% mutate(year = 2016)
+happiness_2017 <- read.csv("data/2017.csv") %>% mutate(year = 2017)
+happiness_2018 <- read.csv("data/2018.csv") %>% mutate(year = 2018)
+happiness_2019 <- read.csv("data/2019.csv") %>% mutate(year = 2019)
+happiness_2020 <- read.csv("data/2020.csv") %>% mutate(year = 2020)
+
+# renaming like variables so we can bind the datasets
+colnames(happiness_2017) = c("Country", "Happiness.Rank", "Happiness.Score",
+                             "Upper.Confidence.Interval", "Lower.Confidence.Interval",
+                             "Economy..GDP.per.Capita.", "Family", "Health..Life.Expectancy.",
+                             "Freedom", "Generosity", "Trust..Government.Corruption.",
+                             "Dystopia.Residual", "year")
+
+colnames(happiness_2018) = c("Happiness.Rank", "Country", "Happiness.Score",
+                             "Economy..GDP.per.Capita.", "Family", "Health..Life.Expectancy.",
+                             "Freedom", "Generosity", "Trust..Government.Corruption.",
+                             "year")
+
+colnames(happiness_2019) = c("Happiness.Rank", "Country", "Happiness.Score",
+                             "Economy..GDP.per.Capita.", "Family", "Health..Life.Expectancy.",
+                             "Freedom", "Generosity", "Trust..Government.Corruption.",
+                             "year")
+
+colnames(happiness_2020) = c("Country", "Region", "Happiness.Score", "Standard.Error",
+                             "Upper.Confidence.Interval", "Lower.Confidence.Interval",
+                             "Logged.GDP.per.capita", "Family", "Healthy.life.expectancy",
+                             "Freedom", "Generosity", "Trust..Government.Corruption.",
+                             "Ladder.score.in.Dystopia", "Explained.by..Log.GDP.per.capita",
+                             "Explained.by..Social.support",
+                             "Explained.by..Healthy.life.expectancy",
+                             "Explained.by..Freedom.to.make.life.choices",
+                             "Explained.by..Generosity",
+                             "Explained.by..Perceptions.of.corruption",
+                             "Dystopia.Residual", "year")
+
+# removing United Arab Emirates from happiness_2018 because it made the variable
+# Trust..Government.Corruption. a chr instead of num, preventing us form binding
+# it to the other world happiness datasets
+happiness_2018 <- happiness_2018[-20,]
+happiness_2018 <- happiness_2018 %>% mutate(Trust..Government.Corruption. =
+                                              as.numeric(Trust..Government.Corruption.))
+
+# finding mean happiness score of each year
+happiness_2015 <- happiness_2015 %>% mutate(mean = mean(Happiness.Score))
+happiness_2016 <- happiness_2016 %>% mutate(mean = mean(Happiness.Score))
+happiness_2017 <- happiness_2017 %>% mutate(mean = mean(Happiness.Score))
+happiness_2018 <- happiness_2018 %>% mutate(mean = mean(Happiness.Score))
+happiness_2019 <- happiness_2019 %>% mutate(mean = mean(Happiness.Score))
+happiness_2020 <- happiness_2020 %>% mutate(mean = mean(Happiness.Score))
+
+# combining all the world happiness datasets
+happiness <- happiness_2015 %>% bind_rows(happiness_2016) %>% bind_rows(happiness_2017) %>%
+  bind_rows(happiness_2018) %>% bind_rows(happiness_2019) %>% bind_rows(happiness_2020)
+
+write.csv(happiness, "data/happiness.csv")
+
+rm(happiness_2015, happiness_2016, happiness_2017, happiness_2018, happiness_2019, happiness_2020)
+```
+
+Reading in the Crime - Assault Dataset:
+
+The UNODC only has Excel files available as a method to download the data. This is not a limitation, since the `library(readxl)` can handle this. However, the format of the files were not user friendly in any way. The table was wide instead of long, so that was the first problem in the system. Additionally, the header (variable names) were incorrectly matched because the years are up top in their own row in the spreadsheet, with the important variable names in the second row. Therefore, R interpreted the variable names as the first observation. The only method that worked without too much of a hassle was to read the table by year, make the data frame longer with `pivot_longer()`, and then merge all the years into one large set.
+
+```{r ASSAULT}
+library(readxl)
+
+#2010
+assault10 <- read_excel("data/serious_assault_0.xlsx") %>%
+  select(c("...1","...2","...3","2010...18","2010...19")) %>%
+  pivot_longer(!c("...1","...2","...3","2010...19"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2010", times=length(.$drop)))
+
+assault10 = assault10[,-5]
+
+colnames(assault10) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+assault10 = assault10[-1,]
+
+#2011
+assault11 <- read_excel("data/serious_assault_0.xlsx") %>%
+  select(c("...1","...2","...3","2011...20","2011...21")) %>%
+  pivot_longer(!c("...1","...2","...3","2011...21"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2011", times=length(.$drop)))
+
+assault11 = assault11[,-5]
+
+colnames(assault11) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+assault11 = assault11[-1,]
+
+#2012
+assault12 <- read_excel("data/serious_assault_0.xlsx") %>%
+  select(c("...1","...2","...3","2012...22","2012...23")) %>%
+  pivot_longer(!c("...1","...2","...3","2012...23"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2012", times=length(.$drop)))
+
+assault12 = assault12[,-5]
+
+colnames(assault12) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+assault12 = assault12[-1,]
+
+#2013
+assault13 <- read_excel("data/serious_assault_0.xlsx") %>%
+  select(c("...1","...2","...3","2013...24","2013...25")) %>%
+  pivot_longer(!c("...1","...2","...3","2013...25"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2013", times=length(.$drop)))
+
+assault13 = assault13[,-5]
+
+colnames(assault13) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+assault13 = assault13[-1,]
+
+#2014
+assault14 <- read_excel("data/serious_assault_0.xlsx") %>%
+  select(c("...1","...2","...3","2014...26","2014...27")) %>%
+  pivot_longer(!c("...1","...2","...3","2014...27"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2014", times=length(.$drop)))
+
+assault14 = assault14[,-5]
+
+colnames(assault14) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+assault14 = assault14[-1,]
+
+#2015
+assault15 <- read_excel("data/serious_assault_0.xlsx") %>%
+  select(c("...1","...2","...3","2015...28","2015...29")) %>%
+  pivot_longer(!c("...1","...2","...3","2015...29"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2015", times=length(.$drop)))
+
+assault15 = assault15[,-5]
+
+colnames(assault15) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+assault15 = assault15[-1,]
+
+#2016
+assault16 <- read_excel("data/serious_assault_0.xlsx") %>%
+  select(c("...1","...2","...3","2016...30","2016...31")) %>%
+  pivot_longer(!c("...1","...2","...3","2016...31"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2016", times=length(.$drop)))
+
+assault16 = assault16[,-5]
+
+colnames(assault16) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+assault16 = assault16[-1,]
+
+#2017
+assault17 <- read_excel("data/serious_assault_0.xlsx") %>%
+  select(c("...1","...2","...3","2017...32","2017...33")) %>%
+  pivot_longer(!c("...1","...2","...3","2017...33"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2017", times=length(.$drop)))
+
+assault17 = assault17[,-5]
+
+colnames(assault17) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+assault17 = assault17[-1,]
+
+assault <- assault10 %>% bind_rows(assault11) %>% bind_rows(assault12) %>% bind_rows(assault13) %>% bind_rows(assault14) %>% bind_rows(assault15) %>% bind_rows(assault16) %>% bind_rows(assault17)
+
+nas <- matrix(c(2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, sum(is.na(assault10$Rate)), sum(is.na(assault11$Rate)), sum(is.na(assault12$Rate)), sum(is.na(assault13$Rate)), sum(is.na(assault14$Rate)), sum(is.na(assault15$Rate)), sum(is.na(assault16$Rate)), sum(is.na(assault17$Rate))), ncol = 2, byrow = FALSE)
+
+colnames(nas) = c("Year", "NAs")
+
+rm(assault10, assault11, assault12, assault13, assault14, assault15, assault16, assault17)
+
+write.csv(assault, "data/assault.csv")
+```
+
+Loading in the Crime - Robbery Dataset:
+
+This excel file for crime also comes from UNODC, so it suffers from the same organization peril outlined in the assault data set. The robbery rates and counts were loaded in by year and then merged.
+
+```{r robberyload}
+library(readxl)
+
+#2010
+robbery10 <- read_excel("data/robbery_0.xlsx") %>%
+  select(c("...1","...2","...3","2010...4","2010...5")) %>%
+  pivot_longer(!c("...1","...2","...3","2010...5"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2010", times=length(.$drop)))
+
+robbery10 = robbery10[,-5]
+
+colnames(robbery10) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+robbery10 = robbery10[-1,]
+
+#2011
+robbery11 <- read_excel("data/robbery_0.xlsx") %>%
+  select(c("...1","...2","...3","2011...6","2011...7")) %>%
+  pivot_longer(!c("...1","...2","...3","2011...7"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2011", times=length(.$drop)))
+
+robbery11 = robbery11[,-5]
+
+colnames(robbery11) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+robbery11 = robbery11[-1,]
+
+#2012
+robbery12 <- read_excel("data/robbery_0.xlsx") %>%
+  select(c("...1","...2","...3","2012...8","2012...9")) %>%
+  pivot_longer(!c("...1","...2","...3","2012...9"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2012", times=length(.$drop)))
+
+robbery12 = robbery12[,-5]
+
+colnames(robbery12) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+robbery12 = robbery12[-1,]
+
+#2013
+robbery13 <- read_excel("data/robbery_0.xlsx") %>%
+  select(c("...1","...2","...3","2013...10","2013...11")) %>%
+  pivot_longer(!c("...1","...2","...3","2013...11"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2013", times=length(.$drop)))
+
+robbery13 = robbery13[,-5]
+
+colnames(robbery13) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+robbery13 = robbery13[-1,]
+
+#2014
+robbery14 <- read_excel("data/robbery_0.xlsx") %>%
+  select(c("...1","...2","...3","2014...12","2014...13")) %>%
+  pivot_longer(!c("...1","...2","...3","2014...13"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2014", times=length(.$drop)))
+
+robbery14 = robbery14[,-5]
+
+colnames(robbery14) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+robbery14 = robbery14[-1,]
+
+#2015
+robbery15 <- read_excel("data/robbery_0.xlsx") %>%
+  select(c("...1","...2","...3","2015...14","2015...15")) %>%
+  pivot_longer(!c("...1","...2","...3","2015...15"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2015", times=length(.$drop)))
+
+robbery15 = robbery15[,-5]
+
+colnames(robbery15) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+robbery15 = robbery15[-1,]
+
+#2016
+robbery16 <- read_excel("data/robbery_0.xlsx") %>%
+  select(c("...1","...2","...3","2016...16","2016...17")) %>%
+  pivot_longer(!c("...1","...2","...3","2016...17"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2016", times=length(.$drop)))
+
+robbery16 = robbery16[,-5]
+
+colnames(robbery16) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+robbery16 = robbery16[-1,]
+
+#2017
+robbery17 <- read_excel("data/robbery_0.xlsx") %>%
+  select(c("...1","...2","...3","2017...18","2017...19")) %>%
+  pivot_longer(!c("...1","...2","...3","2017...19"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2017", times=length(.$drop)))
+
+robbery17 = robbery17[,-5]
+
+colnames(robbery17) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+robbery17 = robbery17[-1,]
+
+robbery <- robbery10 %>% bind_rows(robbery11) %>% bind_rows(robbery12) %>% bind_rows(robbery13) %>% bind_rows(robbery14) %>% bind_rows(robbery15) %>% bind_rows(robbery16) %>% bind_rows(robbery17)
+
+nasrob <- matrix(c(2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, sum(is.na(robbery10$Rate)), sum(is.na(robbery11$Rate)), sum(is.na(robbery12$Rate)), sum(is.na(robbery13$Rate)), sum(is.na(robbery14$Rate)), sum(is.na(robbery15$Rate)), sum(is.na(robbery16$Rate)), sum(is.na(robbery17$Rate))), ncol = 2, byrow = FALSE)
+
+colnames(nasrob) = c("Year", "NAs")
+
+rm(robbery10, robbery11, robbery12, robbery13, robbery14, robbery15, robbery16, robbery17)
+
+write.csv(robbery, "data/robbery.csv")
+```
+
+Loading in the Crime - Sexual Violence Dataset:
+
+This excel file for crime also comes from UNODC, so it suffers from the same organization peril outlined in the assault data set. The sexual violence rates and counts were loaded in by year and then merged.
+
+```{r sexualviolence}
+library(readxl)
+
+#2010
+sexualviolence10 <- read_excel("data/sexual_violence_0.xlsx") %>%
+  select(c("...1","...2","...3","2010...18","2010...19")) %>%
+  pivot_longer(!c("...1","...2","...3","2010...19"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2010", times=length(.$drop)))
+
+sexualviolence10 = sexualviolence10[,-5]
+
+colnames(sexualviolence10) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+sexualviolence10 = sexualviolence10[-1,]
+
+#2011
+sexualviolence11 <- read_excel("data/sexual_violence_0.xlsx") %>%
+  select(c("...1","...2","...3","2011...20","2011...21")) %>%
+  pivot_longer(!c("...1","...2","...3","2011...21"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2011", times=length(.$drop)))
+
+sexualviolence11 = sexualviolence11[,-5]
+
+colnames(sexualviolence11) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+sexualviolence11 = sexualviolence11[-1,]
+
+#2012
+sexualviolence12 <- read_excel("data/sexual_violence_0.xlsx") %>%
+  select(c("...1","...2","...3","2012...22","2012...23")) %>%
+  pivot_longer(!c("...1","...2","...3","2012...23"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2012", times=length(.$drop)))
+
+sexualviolence12 = sexualviolence12[,-5]
+
+colnames(sexualviolence12) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+sexualviolence12 = sexualviolence12[-1,]
+
+#2013
+sexualviolence13 <- read_excel("data/sexual_violence_0.xlsx") %>%
+  select(c("...1","...2","...3","2013...24","2013...25")) %>%
+  pivot_longer(!c("...1","...2","...3","2013...25"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2013", times=length(.$drop)))
+
+sexualviolence13 = sexualviolence13[,-5]
+
+colnames(sexualviolence13) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+sexualviolence13 = sexualviolence13[-1,]
+
+#2014
+sexualviolence14 <- read_excel("data/sexual_violence_0.xlsx") %>%
+  select(c("...1","...2","...3","2014...26","2014...27")) %>%
+  pivot_longer(!c("...1","...2","...3","2014...27"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2014", times=length(.$drop)))
+
+sexualviolence14 = sexualviolence14[,-5]
+
+colnames(sexualviolence14) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+sexualviolence14 = sexualviolence14[-1,]
+
+#2015
+sexualviolence15 <- read_excel("data/sexual_violence_0.xlsx") %>%
+  select(c("...1","...2","...3","2015...28","2015...29")) %>%
+  pivot_longer(!c("...1","...2","...3","2015...29"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2015", times=length(.$drop)))
+
+sexualviolence15 = sexualviolence15[,-5]
+
+colnames(sexualviolence15) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+sexualviolence15 = sexualviolence15[-1,]
+
+#2016
+sexualviolence16 <- read_excel("data/sexual_violence_0.xlsx") %>%
+  select(c("...1","...2","...3","2016...30","2016...31")) %>%
+  pivot_longer(!c("...1","...2","...3","2016...31"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2016", times=length(.$drop)))
+
+sexualviolence16 = sexualviolence16[,-5]
+
+colnames(sexualviolence16) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+sexualviolence16 = sexualviolence16[-1,]
+
+#2017
+sexualviolence17 <- read_excel("data/sexual_violence_0.xlsx") %>%
+  select(c("...1","...2","...3","2017...32","2017...33")) %>%
+  pivot_longer(!c("...1","...2","...3","2017...33"), names_to = "drop", values_to = "Count") %>%
+  mutate(Year = rep("2017", times=length(.$drop)))
+
+sexualviolence17 = sexualviolence17[,-5]
+
+colnames(sexualviolence17) = c("Region","Subregion", "Country", "Rate", "Count", "Year") 
+
+sexualviolence17 = sexualviolence17[-1,]
+
+assault <- sexualviolence10 %>% bind_rows(sexualviolence11) %>% bind_rows(sexualviolence12) %>% bind_rows(sexualviolence13) %>% bind_rows(sexualviolence14) %>% bind_rows(sexualviolence15) %>% bind_rows(sexualviolence16) %>% bind_rows(sexualviolence17)
+
+rm(sexualviolence10, sexualviolence11, sexualviolence12, sexualviolence13, sexualviolence14, sexualviolence15, sexualviolence16, sexualviolence17)
+
+write.csv(assault, "data/sexualviolence.csv")
+```
+
+
+Merging Spotify and Crime:
+
+In order to create a point of comparison between the crime rates and explicit music over the years of 2010-2017, it was necessary to create a common dataset. Therefore, the percentage of explicit music per year was calculated from the Spotify dataset, so that there was data for the year, percent explicit and percent non-explicit music. Then a dataset was created that had explicit percents, region, country, and crime rate with type (assault, robbery, sexual violence). In this way, it is possible to create plots that can compare rate of crime and the prevalence of explicit music. 
+
+```{r alltogether-crime}
+spotify2 <- spotify %>%
+  filter(year >= 2010 & year <= 2017) %>%
+  group_by(year) %>%
+  summarise(
+    perc_expl = round(sum(explicit == 1)/(sum(explicit == 1) + sum(explicit == 0)),2),
+    perc_non_expl = round(sum(explicit == 0)/(sum(explicit == 1) + sum(explicit == 0)),2)
+    )
+
+comparing_assault <- spotify2 %>%
+  filter(year >= 2010 & year <= 2017) %>%
+  inner_join(., subset(assault, select = c(-Subregion)) %>% group_by(Region), 
+             by = c("year" = "Year")) %>%
+  mutate(
+    type = "Assault"
+  )
+
+comparing_robbery <- spotify2 %>%
+  filter(year >= 2010 & year <= 2017) %>%
+  inner_join(., subset(robbery, select = c(-Subregion)), by = c("year" = "Year")) %>%
+  mutate(
+    type = "Robbery"
+  )
+
+comparing_sexualviolence <- spotify2 %>%
+  filter(year >= 2010 & year <= 2017) %>%
+  inner_join(., subset(sexualviolence, select = c(-Subregion)), by = c("year" = "Year")) %>%
+  mutate(
+    type = "Sexual Violence"
+  )
+
+all_together <- comparing_assault %>% bind_rows(comparing_robbery) %>% bind_rows(comparing_sexualviolence)
+
+rm(spotify2, comparing_assault, comparing_robbery, comparing_sexualviolence)
+
+write.csv(all_together, "data/alltogether.csv")
+```

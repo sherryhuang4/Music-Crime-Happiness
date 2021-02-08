@@ -1,0 +1,13 @@
+name: Stat41_finalproject
+title: Stat41_finalproject
+username:
+account: tatabas
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3516260
+bundleId: 4164731
+url: https://tatabas.shinyapps.io/Stat41_finalproject/
+when: 1612136069.97673
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: ATABAS_HUANG_dataCleaning.Rmd|ATABAS_HUANG_finalproject.html|stat41-lab-theme.css|xaringan-presentation.html|xaringan-presentation.rmd|xaringan-themer.css|ATABAS_HUANG_finalproject_files/figure-html/scattervalyear-1.png|images|libs|xaringan-presentation_files
